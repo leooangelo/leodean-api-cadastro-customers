@@ -40,7 +40,7 @@ namespace MS.Customer.API.Token
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(Claims(customer, establishmentId)),
-                Expires = _dateTimeProvider.CurrentDateTime.AddYears(10),
+                Expires = _dateTimeProvider.CurrentDateTime.AddMinutes(5),
                 //Expires = DateTime.UtcNow.AddHours(int.Parse(_configuration["JwtCustomer:HoursToExpire"])),
                 //SigningCredentials = _signingAudienceCertificate.GetAudienceSigningKey(JwtCertified.Customer)
                 SigningCredentials = _signingAudienceCertificate.GetAudienceSigningKey(JwtCertified.User)

@@ -31,6 +31,7 @@ namespace MS.Customer.Domain.ViewModel
 
         [MinLength(11, ErrorMessage = "O CPF deve ter no mínimo 11 caracteres.")]
         [MaxLength(20, ErrorMessage = "O CPF ter no máximo 20 caracteres.")]
+        [RegularExpression("^[0-9]*$")]
         public string Cpf { get; set; }
 
         [Required(ErrorMessage = "O genero não pode ser vazio.")]

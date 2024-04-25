@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Caching.Memory;
 using MS.Customer.Domain;
 using MS.Customer.Domain.Base;
 using MS.Customer.Domain.DTO;
@@ -9,6 +10,7 @@ using MS.Customer.Domain.ViewModel;
 using MS.Customer.Infra.Data.DataAccess.Interfaces;
 using MS.Customer.Services.Interfaces;
 using MS.Customer.Utils.Validator;
+using Polly;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,19 +25,32 @@ namespace MS.Customer.Services
         private readonly IMapper _mapper;
         private readonly ICustomerRepository _customerRepository;
         private readonly IValidator _validator;
+        private readonly IMemoryCache _memoryCache;
 
 
-        public CustomerService(IMapper mapper, ICustomerRepository customerRepository, IValidator validator )
+        public CustomerService(IMapper mapper, ICustomerRepository customerRepository, IValidator validator, IMemoryCache memoryCache)
         {
             _mapper = mapper;
             _customerRepository = customerRepository;
             _validator = validator;
+            _memoryCache = memoryCache;
         }
 
         public async Task<ResponsePaging<ResponseCustomerDTO>> GetAsyncPage(PagingFiltersBase pagingFiltersBase)
         {
+            List<Customers> customersBase = new List<Customers>();
+            if (_memoryCache.TryGetValue("CacheCustomerList", out List<Customers> key))
+            {
+                customersBase = key;
+            }
+            else
+            {
+                var listCustomer = _customerRepository.GetAsync().Result.ToList();
+                customersBase.AddRange(listCustomer);
+                _memoryCache.Set("", listCustomer, TimeSpan.FromMinutes(Double.Parse("1")));
+            }
 
-            var customersBase = await _customerRepository.GetAsync();
+
             var customerQuery = _mapper.Map<IList<ResponseCustomerDTO>>(customersBase).ToList().AsQueryable();
 
             #region Filtros
@@ -62,6 +77,7 @@ namespace MS.Customer.Services
                 };
 
                 responsePaging.data = page.data;
+
                 return responsePaging;
             }
 
@@ -81,13 +97,24 @@ namespace MS.Customer.Services
         public async Task<ResponseCustomerDTO> CreateAsync(CustomerDTO customerDTO)
         {
             var customerToAdd = _mapper.Map<Customers>(customerDTO);
-            customerValid(customerToAdd);
-            customerToAddExist(customerToAdd.Email, customerToAdd.Cpf, customerToAdd.Phone);
+            Parallel.Invoke(
+                () => customerValid(customerToAdd),
+                () => customerToAddExist(customerToAdd.Email, customerToAdd.Cpf, customerToAdd.Phone) 
+                );
 
             customerToAdd.HashPassword();
             customerToAdd.HashDocument();
 
-            var customer = await _customerRepository.CreateAsync(customerToAdd);
+            AsyncPolicy retyPolicy = Policy.Handle<Exception>().WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(100), (result, timespan, retryNo, context) =>
+            {
+                Console.WriteLine($"Retry Policy {retryNo}");
+            });
+
+            var customer = await retyPolicy.ExecuteAsync(async () =>
+            {
+                var response = await _customerRepository.CreateAsync(customerToAdd);
+                return response;
+            });
 
             var responseCustomer = _mapper.Map<ResponseCustomerDTO>(customer);
 

@@ -15,10 +15,14 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
+    <PackageReference Include="Quartz" Version="3.8.1" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.8.1" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.8.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
   </ItemGroup>
 
-  <ItemGroup>
+
+			<ItemGroup>
     <ProjectReference Include="..\MS.Customers.CrossCutting\MS.Customer.CrossCutting.csproj" />
     <ProjectReference Include="..\MS.Customers.Infra\MS.Customer.Infra.csproj" />
     <ProjectReference Include="..\MS.Customers.Services\MS.Customer.Services.csproj" />

@@ -26,7 +26,6 @@ namespace MS.Customer.Infra.DataAccess.Mappings
                 .HasColumnType("VARCHAR(100)")
                 .IsRequired();
 
-
             builder.Property(x => x.Password)
                 .HasColumnType("VARCHAR(100)")
                 .IsRequired();
@@ -34,7 +33,6 @@ namespace MS.Customer.Infra.DataAccess.Mappings
             builder.Property(x => x.Phone)
                 .HasColumnType("VARCHAR(30)")
                 .IsRequired();
-
 
             builder.Property(x => x.Cpf)
                 .HasColumnType("VARCHAR(100)");

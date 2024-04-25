@@ -10,8 +10,10 @@ using MS.Customer.Domain.Middlewares;
 using MS.Customer.Helpers;
 using MS.Customer.Infra;
 using MS.Customer.Infra.Context;
+using MS.Customer.Quartz;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Quartz;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +37,22 @@ builder.Services.AddHttpContextAccessor();
 //},
 //    ServiceLifetime.Transient);
 
+//Config Quartz
+
+builder.Services.AddQuartz(x =>
+{
+    x.UseMicrosoftDependencyInjectionJobFactory();
+});
+
+builder.Services.AddQuartzHostedService(x =>
+{
+    x.WaitForJobsToComplete = true;
+});
+
+builder.Services.ConfigureOptions<QuartzJobSetup>();
+
+//Config memory Cache
+builder.Services.AddMemoryCache();
 
 builder.Services.AddDbContext<CustomerContext>(options =>
     options.UseSqlServer(configuration.GetConnectionString("CustomerContext")),
